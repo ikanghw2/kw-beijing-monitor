@@ -1,0 +1,50 @@
+name: Monitor Beijing KW Notices
+
+on:
+  schedule:
+    # 每 30 分钟运行一次 (7 分和 37 分,避开整点全球拥塞)
+    - cron: '7,37 * * * *'
+  workflow_dispatch:  # 允许手动触发
+
+permissions:
+  contents: write
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run monitor
+        env:
+          SERVERCHAN_KEY: ${{ secrets.SERVERCHAN_KEY }}
+          TARGET_URL: 'https://kw.beijing.gov.cn/zwgk/tzgg/'
+          # 可选: 只推送标题含以下关键词的通知,留空表示全部推送
+          # FILTER_KEYWORDS: '申报,公示,征集'
+        run: python monitor.py
+
+      - name: Commit state
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add state.json
+          if git diff --cached --quiet; then
+            echo "No state change, skip commit"
+          else
+            git commit -m "chore: update monitor state [skip ci]"
+            git push
+          fi
