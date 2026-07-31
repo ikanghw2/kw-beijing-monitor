@@ -2,8 +2,8 @@ name: Monitor Beijing KW Notices
 
 on:
   schedule:
-    # 每 30 分钟运行一次 (7 分和 37 分,避开整点全球拥塞)
-    - cron: '7,37 * * * *'
+    # 每小时第 17 分钟运行(避开整点拥塞,对免费版更稳)
+    - cron: '17 * * * *'
   workflow_dispatch:  # 允许手动触发
 
 permissions:
@@ -16,12 +16,12 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 1
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
           cache: 'pip'
